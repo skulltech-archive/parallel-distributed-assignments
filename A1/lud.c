@@ -3,9 +3,10 @@
 
 
 int LUDecompose(int n, double **A, int *Pi) {
-	for (int i = 0; i < n ; ++i) {
+	for (int i = 0; i < n; ++i) {
 		Pi[i] = i;
 	}
+
 	for (int i = 0; i < n; ++i) {
 		double abs, max = 0.0;
 		int id = i;
@@ -43,8 +44,10 @@ int LUDecompose(int n, double **A, int *Pi) {
 	return 1;
 }
 
+
 int main(int argc, char const *argv[]) {
-	int n = 4;
+	clock_t start = clock();
+	int n = atoi(argv[1]);
 
 	double **A = malloc(n * sizeof(double *));
 	double **Ainit = malloc(n * sizeof(double *));
@@ -56,14 +59,10 @@ int main(int argc, char const *argv[]) {
 		U[i] = malloc(n * sizeof(double));
 		L[i] = malloc(n * sizeof(double));
 	}
-	int *P = malloc(sizeof(int[n]));
+	int *Pi = malloc(sizeof(int[n]));
 	
-	randarr(n, A);
-	for (int i = 0; i < n; ++i) {
-		memcpy(Ainit[i], A[i], n * sizeof(double));
-	}
-
-	LUDecompose(n, A, P);
+	randarr(n, A, Ainit);
+	LUDecompose(n, A, Pi);
 
 	for (int i = 0; i < n; ++i) {
 		for (int j = 0; j < n; ++j) {
@@ -78,8 +77,12 @@ int main(int argc, char const *argv[]) {
 		L[i][i] = 1;
 	}
 
-	FILE *ofile = fopen("matrices", "w");
-	write(n, Ainit, U, L, P, ofile);
-	fclose(ofile);
-	return 0;
+	clock_t end = clock();
+	float seconds = (float)(end - start) / CLOCKS_PER_SEC;
+	printf("Time taken for LU decomposition of a %i X %i matrix: %f\n", n, n, seconds);
+
+	// FILE *ofile = fopen("matrices", "w");
+	// write(n, Ainit, U, L, Pi, ofile);
+	// fclose(ofile);
+	// return 0;
 }

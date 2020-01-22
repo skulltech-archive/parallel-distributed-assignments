@@ -10,7 +10,7 @@ void matmul(int n, double **a, double **b, double **result);
 void matdif(int n, double **a, double **b, double **result);
 double l21norm(int n, double **a);
 void write(int n, double **a, double **u, double **l, int *pi, FILE *ofile);
-void randarr(int n, double **A);
+void randarr(int n, double **A, double **Ainit);
 
 
 /*int verify() {
@@ -32,12 +32,32 @@ void randarr(int n, double **A);
 
 }*/
 
-void randarr(int n, double **A) {
+void randarr(int n, double **A, double **Ainit) {
 	srand48(time(NULL));
 	for (int i = 0; i < n; ++i) {
 		for (int j = 0; j < n; ++j) {
 			A[i][j] = drand48();
 		}
+		memcpy(Ainit[i], A[i], n * sizeof(double));
+	}
+}
+
+void initarrs(int n, double **A, double **Ainit, double **L, double **U, int *Pi) {
+	srand48(time(NULL));
+	for (int i = 0; i < n; ++i) {
+		for (int j = 0; j < n; ++j) {
+			A[i][j] = drand48();
+			if (j < i) {
+				U[i][j] = 0;
+				L[i][j] = drand48();
+			} else { 
+				U[i][j] = drand48();
+				L[i][j] = 0;
+			}
+		}
+		L[i][i] = 1;
+		Pi[i] = i;
+		memcpy(Ainit[i], A[i], n * sizeof(double));
 	}
 }
 
