@@ -36,11 +36,6 @@ def readfile(ludresults):
 def verify(ludresults):
 	a, u, l, p = readfile(ludresults)
 	residual = (p @ a) - (l @ u)
-	print(a)
-	print(u)
-	print(l)
-	print(p)
-	print('Cal')
 	print(p @ a)
 	print(l @ u)
 	print(residual)

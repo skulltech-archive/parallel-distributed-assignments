@@ -8,25 +8,48 @@
 struct pllop1_arg {
 	int n, i, j1, j2;
     double **A;
+    bool execute, terminate, ready;
 };
+
 
 void *pllop1(void *arguments) {
 	struct pllop1_arg *args = arguments;
-	int n = args->n, i = args->i, j1 = args->j1, j2 = args->j2;
-	double **A = args->A;
+	
+	while (!args->terminate) {
+		if (args->execute) {
+			int n = args->n, i = args->i, j1 = args->j1, j2 = args->j2;
+			double **A = args->A;
 
-	// printf("i: %i j1: %i, j2: %i\n", i, j1, j2);
-	for (int j = j1; j < j2; ++j) {
-		A[j][i] /= A[i][i];
-		for (int k = i + 1; k < n; ++k) {
-			// printf("%i\t%i\t%i\n", i, j, k);
-			A[j][k] -= A[j][i] * A[i][k];
+			// printf("i: %i j1: %i, j2: %i\n", i, j1, j2);
+			for (int j = j1; j < j2; ++j) {
+				A[j][i] /= A[i][i];
+				for (int k = i + 1; k < n; ++k) {
+					// printf("%i\t%i\t%i\n", i, j, k);
+					A[j][k] -= A[j][i] * A[i][k];
+				}
+			}
+			args->execute = false;
+			args->ready = true;
 		}
 	}
 }
 
 
 int LUDecompose(int n, double **A, int *Pi, int threads) {
+	pthread_t tids[threads];
+	struct pllop1_arg argses[threads];
+
+	for (int t = 0; t < threads; ++t) {
+		argses[t].n = n;
+		argses[t].A = A;
+		argses[t].execute = false;
+		argses[t].terminate = false;
+		argses[t].ready = true;
+		if (pthread_create(&tids[t], NULL, pllop1, &argses[t])) {
+			fprintf(stderr, "Error creating thread\n");
+		}
+	}
+
 	for (int i = 0; i < n; ++i) {
 		Pi[i] = i;
 	}
@@ -57,24 +80,28 @@ int LUDecompose(int n, double **A, int *Pi, int threads) {
 			A[id] = ptr;
 		}
 
-		pthread_t tids[threads];
-		struct pllop1_arg argses[threads];
-
 		for (int t = 0; t < threads; ++t) {
-			argses[t].n = n;
 			argses[t].i = i;
 			int per_thread = ((n - i - 1) / threads) + 1;
 			argses[t].j1 = MIN((t * per_thread) + (i + 1), n);
 			argses[t].j2 = MIN(((t + 1) * per_thread) + (i + 1), n);
-			argses[t].A = A;
-			if (pthread_create(&tids[t], NULL, pllop1, &argses[t])) {
-				fprintf(stderr, "Error creating thread\n");
-				return 0;
+			argses[t].execute = true;
+			argses[t].ready = false;
+		}
+		
+		while (1) {
+			bool allready = true;
+			for (int t = 0; t < threads; ++t) {
+				allready = allready && argses[t].ready;
 			}
+			if (allready) { break; }
 		}
-		for (int t = 0; t < threads; ++t) {
-			pthread_join(tids[t], NULL);
-		}
+	}
+	for (int t = 0; t < threads; ++t) {
+		argses[t].terminate = true;
+	}
+	for (int t = 0; t < threads; ++t) {
+		pthread_join(tids[t], NULL);
 	}
 	return 1;
 }
@@ -116,8 +143,8 @@ int main(int argc, char const *argv[]) {
 	float seconds = (float)(end - start) / CLOCKS_PER_SEC;
 	printf("Time taken for LU decomposition of a %i X %i matrix: %f\n", n, n, seconds);
 
-	// FILE *ofile = fopen("matrices", "w");
-	// write(n, Ainit, U, L, Pi, ofile);
-	// fclose(ofile);
+	FILE *ofile = fopen("matrices", "w");
+	write(n, Ainit, U, L, Pi, ofile);
+	fclose(ofile);
 	return 0;
 }

@@ -1,5 +1,5 @@
 N = 2000
-THREADS = 4
+THREADS = 2
 
 build: lud.c
 	gcc -o lud lud.c -lm

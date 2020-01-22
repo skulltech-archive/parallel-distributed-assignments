@@ -81,8 +81,8 @@ int main(int argc, char const *argv[]) {
 	float seconds = (float)(end - start) / CLOCKS_PER_SEC;
 	printf("Time taken for LU decomposition of a %i X %i matrix: %f\n", n, n, seconds);
 
-	// FILE *ofile = fopen("matrices", "w");
-	// write(n, Ainit, U, L, Pi, ofile);
-	// fclose(ofile);
-	// return 0;
+	FILE *ofile = fopen("matrices", "w");
+	write(n, Ainit, U, L, Pi, ofile);
+	fclose(ofile);
+	return 0;
 }
