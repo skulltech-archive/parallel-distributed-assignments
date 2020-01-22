@@ -6,14 +6,31 @@
 #include <stdbool.h>
 
 
-void swapsin(int *a, int *b);
-void swaparr(double *a, double *b, int n);
-void matmul(int n, double (*a)[n], double (*b)[n], double (*result)[n]);
-void matdif(int n, double (*a)[n], double (*b)[n], double (*result)[n]);
-double l21norm(int n, double (*a)[n]);
-void write(int n, double (*a)[n], double (*u)[n], double (*l)[n], int *pi, FILE *outfile);
+void matmul(int n, double **a, double **b, double **result);
+void matdif(int n, double **a, double **b, double **result);
+double l21norm(int n, double **a);
+void write(int n, double **a, double **u, double **l, int *pi, FILE *ofile);
 void randarr(int n, double **A);
 
+
+/*int verify() {
+	double (*p)[n] = malloc(sizeof(double[n][n]));
+	for (int i = 0; i < n; ++i) {
+		for (int j = 0; j < n; ++j) {
+			p[i][j] = 0;
+		}
+		p[i][pi[i]] = 1;
+	}
+	double (*pa)[n] = malloc(sizeof(double[n][n]));
+	double (*lu)[n] = malloc(sizeof(double[n][n]));
+	double (*residual)[n] = malloc(sizeof(double[n][n]));
+	matmul(n, p, ainit, pa);
+	matmul(n, l, u, lu);
+	matdif(n, pa, lu, residual);
+	double norm = l21norm(n, residual);
+	printf("L21 norm of the residual: %f\n", norm);
+
+}*/
 
 void randarr(int n, double **A) {
 	srand48(time(NULL));
@@ -24,31 +41,7 @@ void randarr(int n, double **A) {
 	}
 }
 
-void randarrw(int n, double *A) {
-	srand48(time(NULL));
-	for (int i = 0; i < n; ++i) {
-		for (int j = 0; j < n; ++j) {
-			A[(i * n) + j] = drand48();
-		}
-	}
-}
-
-void swapsin(int *a, int *b) {
-	int temp = *a;
-	*a = *b;
-	*b = temp;
-}
-
-void swaparr(double *a, double *b, int n) {
-	double *temp = malloc(sizeof(double[n]));
-	for (int i = 0; i < n; ++i) {
-		temp[i] = a[i];
-		a[i] = b[i];
-		b[i] = temp[i];
-	}
-}
-
-void matmul(int n, double (*a)[n], double (*b)[n], double (*result)[n]) {
+void matmul(int n, double **a, double **b, double **result) {
 	for (int i = 0; i < n; ++i) {
 		for (int j = 0; j < n; ++j) {
 			result[i][j] = 0;
@@ -59,7 +52,7 @@ void matmul(int n, double (*a)[n], double (*b)[n], double (*result)[n]) {
 	}
 }
 
-void matdif(int n, double (*a)[n], double (*b)[n], double (*result)[n]) {
+void matdif(int n, double **a, double **b, double **result) {
 	for (int i = 0; i < n; ++i) {
 		for (int j = 0; j < n; ++j) {
 			result[i][j] = a[i][j] - b[i][j];
@@ -67,7 +60,7 @@ void matdif(int n, double (*a)[n], double (*b)[n], double (*result)[n]) {
 	}
 }
 
-double l21norm(int n, double (*a)[n]) {
+double l21norm(int n, double **a) {
 	double sum = 0;
 	for (int j = 0; j < n; ++j) {
 		double sqrsum = 0;
@@ -79,96 +72,29 @@ double l21norm(int n, double (*a)[n]) {
 	return sum;
 }
 
-void write(int n, double (*a)[n], double (*u)[n], double (*l)[n], int *pi, FILE *ofile) {
+void write(int n, double **a, double **u, double **l, int *pi, FILE *ofile) {
 	fprintf(ofile, "%i\n", n);
-	// fprintf(ofile, "\n");
 	for (int i = 0; i < n; ++i) {
 		for (int j = 0; j < n; ++j) {
 			fprintf(ofile, "%f\t", a[i][j]);
 		}
 		fprintf(ofile, "\n");
 	}
-	// fprintf(ofile, "\n");
 	for (int i = 0; i < n; ++i) {
 		for (int j = 0; j < n; ++j) {
 			fprintf(ofile, "%f\t", u[i][j]);
 		}
 		fprintf(ofile, "\n");
 	}
-	// fprintf(ofile, "\n");
 	for (int i = 0; i < n; ++i) {
 		for (int j = 0; j < n; ++j) {
 			fprintf(ofile, "%f\t", l[i][j]);
 		}
 		fprintf(ofile, "\n");
 	}
-	// fprintf(ofile, "\n");
 	for (int i = 0; i < n; ++i) {
 		fprintf(ofile, "%i\t", pi[i]);
 	}
 	fprintf(ofile, "\n");
 	
 }
-
-void writep(int n, double **a, double **u, double **l, int *pi, FILE *ofile) {
-	fprintf(ofile, "%i\n", n);
-	// fprintf(ofile, "\n");
-	for (int i = 0; i < n; ++i) {
-		for (int j = 0; j < n; ++j) {
-			fprintf(ofile, "%f\t", a[i][j]);
-		}
-		fprintf(ofile, "\n");
-	}
-	// fprintf(ofile, "\n");
-	for (int i = 0; i < n; ++i) {
-		for (int j = 0; j < n; ++j) {
-			fprintf(ofile, "%f\t", u[i][j]);
-		}
-		fprintf(ofile, "\n");
-	}
-	// fprintf(ofile, "\n");
-	for (int i = 0; i < n; ++i) {
-		for (int j = 0; j < n; ++j) {
-			fprintf(ofile, "%f\t", l[i][j]);
-		}
-		fprintf(ofile, "\n");
-	}
-	// fprintf(ofile, "\n");
-	for (int i = 0; i < n; ++i) {
-		fprintf(ofile, "%i\t", pi[i]);
-	}
-	fprintf(ofile, "\n");
-	
-}
-
-void writepw(int n, double *a, double **u, double **l, int *pi, FILE *ofile) {
-	fprintf(ofile, "%i\n", n);
-	// fprintf(ofile, "\n");
-	for (int i = 0; i < n; ++i) {
-		for (int j = 0; j < n; ++j) {
-			fprintf(ofile, "%f\t", a[i *n + j]);
-		}
-		fprintf(ofile, "\n");
-	}
-	// fprintf(ofile, "\n");
-	for (int i = 0; i < n; ++i) {
-		for (int j = 0; j < n; ++j) {
-			fprintf(ofile, "%f\t", u[i][j]);
-		}
-		fprintf(ofile, "\n");
-	}
-	// fprintf(ofile, "\n");
-	for (int i = 0; i < n; ++i) {
-		for (int j = 0; j < n; ++j) {
-			fprintf(ofile, "%f\t", l[i][j]);
-		}
-		fprintf(ofile, "\n");
-	}
-	// fprintf(ofile, "\n");
-	for (int i = 0; i < n; ++i) {
-		fprintf(ofile, "%i\t", pi[i]);
-	}
-	fprintf(ofile, "\n");
-	
-}
-

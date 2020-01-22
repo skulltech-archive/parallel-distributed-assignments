@@ -126,7 +126,7 @@ void lud(int n, bool output, bool verify) {
 int main(int argc, char const *argv[]) {
 	if (argc < 2) {
 		printf("The first argument must be n.\n");
-		exit(1);
+		return 1;
 	} else if (argc == 2) {
 		lud(atoi(argv[1]), false, false);
 	} else {
