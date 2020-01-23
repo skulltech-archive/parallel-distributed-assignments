@@ -46,7 +46,9 @@ int LUDecompose(int n, double **A, int *Pi) {
 
 
 int main(int argc, char const *argv[]) {
-	clock_t start = clock();
+	struct timespec start, finish;
+	double elapsed;
+	clock_gettime(CLOCK_MONOTONIC, &start);
 	int n = atoi(argv[1]);
 
 	double **A = malloc(n * sizeof(double *));
@@ -77,12 +79,13 @@ int main(int argc, char const *argv[]) {
 		L[i][i] = 1;
 	}
 
-	clock_t end = clock();
-	float seconds = (float)(end - start) / CLOCKS_PER_SEC;
-	printf("Time taken for LU decomposition of a %i X %i matrix: %f\n", n, n, seconds);
+	clock_gettime(CLOCK_MONOTONIC, &finish);
+	elapsed = (finish.tv_sec - start.tv_sec);
+	elapsed += (finish.tv_nsec - start.tv_nsec) / 1000000000.0;
+	printf("Time taken for LU decomposition of a %i X %i matrix: %f\n", n, n, elapsed);
 
-	FILE *ofile = fopen("matrices", "w");
-	write(n, Ainit, U, L, Pi, ofile);
-	fclose(ofile);
-	return 0;
+	// FILE *ofile = fopen("matrices", "w");
+	// write(n, Ainit, U, L, Pi, ofile);
+	// fclose(ofile);
+	// return 0;
 }

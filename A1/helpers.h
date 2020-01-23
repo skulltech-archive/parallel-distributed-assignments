@@ -42,6 +42,17 @@ void randarr(int n, double **A, double **Ainit) {
 	}
 }
 
+void randarromp(int n, double **A, double **Ainit) {
+	srand48(time(NULL));
+	#pragma omp parallel for schedule(static)
+	for (int i = 0; i < n; ++i) {
+		for (int j = 0; j < n; ++j) {
+			A[i][j] = drand48();
+		}
+		memcpy(Ainit[i], A[i], n * sizeof(double));
+	}
+}
+
 void initarrs(int n, double **A, double **Ainit, double **L, double **U, int *Pi) {
 	srand48(time(NULL));
 	for (int i = 0; i < n; ++i) {
