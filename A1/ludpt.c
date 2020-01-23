@@ -7,7 +7,7 @@
 
 
 struct pllop1_arg {
-	int n, i, j1, j2;
+	int n, i, j1, j2, t;
     double **A;
     sem_t sem;
 };
@@ -27,7 +27,8 @@ void *pllop1(void *arguments) {
 				A[j][k] -= A[j][i] * A[i][k];
 			}
 		}
-		pthread_barrier_wait(&barrier);
+		pthread_barrier_wait(&barrier); 
+		if (!args->t) { break; }
 	}
 }
 
@@ -35,14 +36,17 @@ void *pllop1(void *arguments) {
 int LUDecompose(int n, double **A, int *Pi, int threads) {
 	pthread_t tids[threads];
 	struct pllop1_arg argses[threads];
-	pthread_barrier_init(&barrier, NULL, threads + 1);
+	pthread_barrier_init(&barrier, NULL, threads);
 
 	for (int t = 0; t < threads; ++t) {
 		argses[t].n = n;
 		argses[t].A = A;
+		argses[t].t = t;
 		sem_init(&argses[t].sem, 0, 0);
-		if (pthread_create(&tids[t], NULL, pllop1, &argses[t])) {
-			fprintf(stderr, "Error creating thread\n");
+		if (t > 0) {
+			if (pthread_create(&tids[t], NULL, pllop1, &argses[t])) {
+				fprintf(stderr, "Error creating thread\n");
+			}
 		}
 	}
 
@@ -83,10 +87,10 @@ int LUDecompose(int n, double **A, int *Pi, int threads) {
 			argses[t].j2 = MIN(((t + 1) * per_thread) + (i + 1), n);
 			sem_post(&argses[t].sem);
 		}
-		pthread_barrier_wait(&barrier);
+		pllop1(&argses[0]);
 	}
 
-	for (int t = 0; t < threads; ++t) {
+	for (int t = 1; t < threads; ++t) {
 		pthread_cancel(tids[t]);
 	}
 	return 1;

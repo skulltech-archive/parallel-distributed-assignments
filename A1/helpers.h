@@ -10,7 +10,10 @@ void matmul(int n, double **a, double **b, double **result);
 void matdif(int n, double **a, double **b, double **result);
 double l21norm(int n, double **a);
 void write(int n, double **a, double **u, double **l, int *pi, FILE *ofile);
+void write1d(int n, double *a, double *u, double *l, int *pi, FILE *ofile);
 void randarr(int n, double **A, double **Ainit);
+void randarromp(int n, double **A, double **Ainit);
+void randarromp1d(int n, double *A, double *Ainit);
 
 
 /*int verify() {
@@ -51,6 +54,17 @@ void randarromp(int n, double **A, double **Ainit) {
 		}
 		memcpy(Ainit[i], A[i], n * sizeof(double));
 	}
+}
+
+void randarromp1d(int n, double *A, double *Ainit) {
+	srand48(time(NULL));
+	#pragma omp parallel for schedule(static) collapse(2)
+	for (int i = 0; i < n; ++i) {
+		for (int j = 0; j < n; ++j) {
+			A[i*n + j] = drand48();
+		}
+	}
+	memcpy(Ainit, A, sizeof(double[n][n]));
 }
 
 void initarrs(int n, double **A, double **Ainit, double **L, double **U, int *Pi) {
@@ -120,6 +134,33 @@ void write(int n, double **a, double **u, double **l, int *pi, FILE *ofile) {
 	for (int i = 0; i < n; ++i) {
 		for (int j = 0; j < n; ++j) {
 			fprintf(ofile, "%f\t", l[i][j]);
+		}
+		fprintf(ofile, "\n");
+	}
+	for (int i = 0; i < n; ++i) {
+		fprintf(ofile, "%i\t", pi[i]);
+	}
+	fprintf(ofile, "\n");
+	
+}
+
+void write1d(int n, double *a, double *u, double *l, int *pi, FILE *ofile) {
+	fprintf(ofile, "%i\n", n);
+	for (int i = 0; i < n; ++i) {
+		for (int j = 0; j < n; ++j) {
+			fprintf(ofile, "%f\t", a[i*n + j]);
+		}
+		fprintf(ofile, "\n");
+	}
+	for (int i = 0; i < n; ++i) {
+		for (int j = 0; j < n; ++j) {
+			fprintf(ofile, "%f\t", u[i*n + j]);
+		}
+		fprintf(ofile, "\n");
+	}
+	for (int i = 0; i < n; ++i) {
+		for (int j = 0; j < n; ++j) {
+			fprintf(ofile, "%f\t", l[i*n + j]);
 		}
 		fprintf(ofile, "\n");
 	}
