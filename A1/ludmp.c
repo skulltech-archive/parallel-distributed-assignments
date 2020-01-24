@@ -1,10 +1,13 @@
 #include "helpers.h"
 #include <omp.h>
 
+// Tolerance value for detecting if a float is close enough to zero
 #define TOLERANCE 0.000001
 
 
+// The LU decompose algorithm
 int LUDecompose(int n, double **A, int *Pi) {
+	// Parallelised and statically scheduled for loop
 	#pragma omp parallel for schedule(static)
 	for (int i = 0; i < n; ++i) {
 		Pi[i] = i;
@@ -36,6 +39,7 @@ int LUDecompose(int n, double **A, int *Pi) {
 			A[id] = ptr;
 		}
 
+		// The main for loop of the algorithm, parallelised and statically scheduled
 		#pragma omp parallel for schedule(static)
 		for (int j = i + 1; j < n; ++j) {
 			A[j][i] /= A[i][i];
@@ -52,6 +56,7 @@ int LUDecompose(int n, double **A, int *Pi) {
 int main(int argc, char const *argv[]) {
 	struct timespec start, finish;
 	double elapsed;
+	// We need system time, not CPU time
 	clock_gettime(CLOCK_MONOTONIC, &start);
 	int n = atoi(argv[1]);
 
@@ -61,6 +66,7 @@ int main(int argc, char const *argv[]) {
 	double **L = malloc(n * sizeof(double *));
 	int *Pi = malloc(sizeof(int[n]));
 
+	// Parallelised and statically scheduled for loop
 	#pragma omp parallel for schedule(static)
 	for (int i = 0; i < n; ++i) {
 		A[i] = malloc(n * sizeof(double));
@@ -72,6 +78,7 @@ int main(int argc, char const *argv[]) {
 	randarromp(n, A, Ainit);
 	LUDecompose(n, A, Pi);
 
+	// This loop is perfectly collapsible
 	#pragma omp parallel for schedule(static) collapse(2)
 	for (int i = 0; i < n; ++i) {
 		for (int j = 0; j < n; ++j) {
@@ -91,8 +98,9 @@ int main(int argc, char const *argv[]) {
 	elapsed += (finish.tv_nsec - start.tv_nsec) / 1000000000.0;
 	printf("Time taken for LU decomposition of a %i X %i matrix: %f\n", n, n, elapsed);
 
-	// FILE *ofile = fopen("matrices", "w");
-	// write(n, Ainit, U, L, Pi, ofile);
-	// fclose(ofile);
-	// return 0;
+	// Write the matrices, including the resultant ones, to a file
+	FILE *ofile = fopen("matrices", "w");
+	write(n, Ainit, U, L, Pi, ofile);
+	fclose(ofile);
+	return 0;
 }

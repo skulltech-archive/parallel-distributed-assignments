@@ -2,23 +2,29 @@
 #include <pthread.h>
 #include <semaphore.h>
 
+// Tolerance value for detecting if a float is close enough to zero
 #define TOLERANCE 0.000001
+// Macro for getting the min of two numbers
 #define MIN(X, Y) (((X) < (Y)) ? (X) : (Y))
 
 
+// The struct to be used as argument for the parallel threads
 struct pllop1_arg {
 	int n, i, j1, j2, t;
     double **A;
     sem_t sem;
 };
 
+// Barrier for synchronising the threads
 pthread_barrier_t barrier;
 
+// The function for the threads
 void *pllop1(void *arguments) {
 	struct pllop1_arg *args = arguments;
 
 	while (1) {
-		sem_wait(&args->sem);
+		// Wait for the signal from the main thread
+		sem_wait(&args->sem); 
 		int n = args->n, i = args->i, j1 = args->j1, j2 = args->j2;
 		double **A = args->A;
 		for (int j = j1; j < j2; ++j) {
@@ -27,12 +33,14 @@ void *pllop1(void *arguments) {
 				A[j][k] -= A[j][i] * A[i][k];
 			}
 		}
+		// Wait for all the threads to have finished
 		pthread_barrier_wait(&barrier); 
+		// If the function is called by the main threads, exit
 		if (!args->t) { break; }
 	}
 }
 
-
+// The LU decompose algorithm
 int LUDecompose(int n, double **A, int *Pi, int threads) {
 	pthread_t tids[threads];
 	struct pllop1_arg argses[threads];
@@ -43,6 +51,7 @@ int LUDecompose(int n, double **A, int *Pi, int threads) {
 		argses[t].A = A;
 		argses[t].t = t;
 		sem_init(&argses[t].sem, 0, 0);
+		// The argses[0] is for the main thread, create a thread for every other args
 		if (t > 0) {
 			if (pthread_create(&tids[t], NULL, pllop1, &argses[t])) {
 				fprintf(stderr, "Error creating thread\n");
@@ -80,6 +89,7 @@ int LUDecompose(int n, double **A, int *Pi, int threads) {
 			A[id] = ptr;
 		}
 
+		// Set the arguments for the different threads, and then post the semaphore signal
 		for (int t = 0; t < threads; ++t) {
 			argses[t].i = i;
 			int per_thread = ((n - i - 1) / threads) + 1;
@@ -87,9 +97,11 @@ int LUDecompose(int n, double **A, int *Pi, int threads) {
 			argses[t].j2 = MIN(((t + 1) * per_thread) + (i + 1), n);
 			sem_post(&argses[t].sem);
 		}
+		// The main thread doesn't sit idle, it also does a slice of the work, using argses[0]
 		pllop1(&argses[0]);
 	}
 
+	// Kill every child thread
 	for (int t = 1; t < threads; ++t) {
 		pthread_cancel(tids[t]);
 	}
@@ -100,6 +112,7 @@ int LUDecompose(int n, double **A, int *Pi, int threads) {
 int main(int argc, char const *argv[]) {
 	struct timespec start, finish;
 	double elapsed;
+	// We need system time, not CPU time
 	clock_gettime(CLOCK_MONOTONIC, &start);
 	int n = atoi(argv[1]), threads = atoi(argv[2]);
 
@@ -136,8 +149,9 @@ int main(int argc, char const *argv[]) {
 	elapsed += (finish.tv_nsec - start.tv_nsec) / 1000000000.0;
 	printf("Time taken for LU decomposition of a %i X %i matrix: %f\n", n, n, elapsed);
 
-	// FILE *ofile = fopen("matrices", "w");
-	// write(n, Ainit, U, L, Pi, ofile);
-	// fclose(ofile);
-	// return 0;
+	// Write the matrices, including the resultant ones, to a file
+	FILE *ofile = fopen("matrices", "w");
+	write(n, Ainit, U, L, Pi, ofile);
+	fclose(ofile);
+	return 0;
 }

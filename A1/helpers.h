@@ -16,25 +16,7 @@ void randarromp(int n, double **A, double **Ainit);
 void randarromp1d(int n, double *A, double *Ainit);
 
 
-/*int verify() {
-	double (*p)[n] = malloc(sizeof(double[n][n]));
-	for (int i = 0; i < n; ++i) {
-		for (int j = 0; j < n; ++j) {
-			p[i][j] = 0;
-		}
-		p[i][pi[i]] = 1;
-	}
-	double (*pa)[n] = malloc(sizeof(double[n][n]));
-	double (*lu)[n] = malloc(sizeof(double[n][n]));
-	double (*residual)[n] = malloc(sizeof(double[n][n]));
-	matmul(n, p, ainit, pa);
-	matmul(n, l, u, lu);
-	matdif(n, pa, lu, residual);
-	double norm = l21norm(n, residual);
-	printf("L21 norm of the residual: %f\n", norm);
-
-}*/
-
+// Function for creating a random array and a copy thereof
 void randarr(int n, double **A, double **Ainit) {
 	srand48(time(NULL));
 	for (int i = 0; i < n; ++i) {
@@ -45,6 +27,7 @@ void randarr(int n, double **A, double **Ainit) {
 	}
 }
 
+// Parallelised version of randarr
 void randarromp(int n, double **A, double **Ainit) {
 	srand48(time(NULL));
 	#pragma omp parallel for schedule(static)
@@ -56,6 +39,7 @@ void randarromp(int n, double **A, double **Ainit) {
 	}
 }
 
+// Parallelised version of randarr that works with 1d arrays
 void randarromp1d(int n, double *A, double *Ainit) {
 	srand48(time(NULL));
 	#pragma omp parallel for schedule(static) collapse(2)
@@ -67,6 +51,7 @@ void randarromp1d(int n, double *A, double *Ainit) {
 	memcpy(Ainit, A, sizeof(double[n][n]));
 }
 
+// Unused function that initializes A, Ainit, L, U and Pi, all at once
 void initarrs(int n, double **A, double **Ainit, double **L, double **U, int *Pi) {
 	srand48(time(NULL));
 	for (int i = 0; i < n; ++i) {
@@ -86,6 +71,7 @@ void initarrs(int n, double **A, double **Ainit, double **L, double **U, int *Pi
 	}
 }
 
+// Function for multiplying two matrices
 void matmul(int n, double **a, double **b, double **result) {
 	for (int i = 0; i < n; ++i) {
 		for (int j = 0; j < n; ++j) {
@@ -97,6 +83,7 @@ void matmul(int n, double **a, double **b, double **result) {
 	}
 }
 
+// Calculates the difference of two matrices
 void matdif(int n, double **a, double **b, double **result) {
 	for (int i = 0; i < n; ++i) {
 		for (int j = 0; j < n; ++j) {
@@ -105,6 +92,7 @@ void matdif(int n, double **a, double **b, double **result) {
 	}
 }
 
+// Calculates the l21 norm of a matrix
 double l21norm(int n, double **a) {
 	double sum = 0;
 	for (int j = 0; j < n; ++j) {
@@ -117,6 +105,7 @@ double l21norm(int n, double **a) {
 	return sum;
 }
 
+// Writes the matrices A, U, L and Pi to a file
 void write(int n, double **a, double **u, double **l, int *pi, FILE *ofile) {
 	fprintf(ofile, "%i\n", n);
 	for (int i = 0; i < n; ++i) {
@@ -144,6 +133,7 @@ void write(int n, double **a, double **u, double **l, int *pi, FILE *ofile) {
 	
 }
 
+// A version of the function write that works with 1d matrices
 void write1d(int n, double *a, double *u, double *l, int *pi, FILE *ofile) {
 	fprintf(ofile, "%i\n", n);
 	for (int i = 0; i < n; ++i) {
@@ -170,3 +160,23 @@ void write1d(int n, double *a, double *u, double *l, int *pi, FILE *ofile) {
 	fprintf(ofile, "\n");
 	
 }
+
+// Unused code for verifying the result of the decomposition.
+/*int verify() {
+	double (*p)[n] = malloc(sizeof(double[n][n]));
+	for (int i = 0; i < n; ++i) {
+		for (int j = 0; j < n; ++j) {
+			p[i][j] = 0;
+		}
+		p[i][pi[i]] = 1;
+	}
+	double (*pa)[n] = malloc(sizeof(double[n][n]));
+	double (*lu)[n] = malloc(sizeof(double[n][n]));
+	double (*residual)[n] = malloc(sizeof(double[n][n]));
+	matmul(n, p, ainit, pa);
+	matmul(n, l, u, lu);
+	matdif(n, pa, lu, residual);
+	double norm = l21norm(n, residual);
+	printf("L21 norm of the residual: %f\n", norm);
+
+}*/

@@ -1,10 +1,13 @@
 #include "helpers.h"
 #include <omp.h>
 
+// Tolerance value for detecting if a float is close enough to zero
 #define TOLERANCE 0.000001
 
 
+// The LU decompose algorithm
 int LUDecompose(int n, double *A, int *Pi) {
+	// Parallelised and statically scheduled for loop
 	#pragma omp parallel for schedule(static)
 	for (int i = 0; i < n; ++i) {
 		Pi[i] = i;
@@ -39,6 +42,7 @@ int LUDecompose(int n, double *A, int *Pi) {
 			}
 		}
 
+		// The main for loop of the algorithm, parallelised and statically scheduled
 		#pragma omp parallel for schedule(static)
 		for (int j = i + 1; j < n; ++j) {
 			A[j*n + i] /= A[i*n + i];
@@ -55,6 +59,7 @@ int LUDecompose(int n, double *A, int *Pi) {
 int main(int argc, char const *argv[]) {
 	struct timespec start, finish;
 	double elapsed;
+	// We need system time, not CPU time
 	clock_gettime(CLOCK_MONOTONIC, &start);
 	int n = atoi(argv[1]);
 
@@ -86,6 +91,7 @@ int main(int argc, char const *argv[]) {
 	elapsed += (finish.tv_nsec - start.tv_nsec) / 1000000000.0;
 	printf("Time taken for LU decomposition of a %i X %i matrix: %f\n", n, n, elapsed);
 
+	// Write the matrices, including the resultant ones, to a file
 	FILE *ofile = fopen("matrices", "w");
 	write1d(n, Ainit, U, L, Pi, ofile);
 	fclose(ofile);
