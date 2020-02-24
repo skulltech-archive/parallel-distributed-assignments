@@ -6,14 +6,17 @@
 #include <stdbool.h>
 
 
-void matmul(int n, double **a, double **b, double **result);
-void matdif(int n, double **a, double **b, double **result);
-double l21norm(int n, double **a);
-void write(int n, double **a, double **u, double **l, int *pi, FILE *ofile);
-void write1d(int n, double *a, double *u, double *l, int *pi, FILE *ofile);
+void write(int n, double **a, double **u, double **l, int *pi);
+void write1d(int n, double *a, double *u, double *l, int *pi);
 void randarr(int n, double **A, double **Ainit);
 void randarromp(int n, double **A, double **Ainit);
 void randarromp1d(int n, double *A, double *Ainit);
+void readarr(const char filename[], int n, double **A, double **Ainit);
+void readarr1d(const char filename[], int n, double *A, double *Ainit);
+void matmul(int n, double **a, double **b, double **result);
+void matdif(int n, double **a, double **b, double **result);
+double l21norm(int n, double **a);
+void initarrs(int n, double **A, double **Ainit, double **L, double **U, int *Pi);
 
 
 // Function for creating a random array and a copy thereof
@@ -49,6 +52,79 @@ void randarromp1d(int n, double *A, double *Ainit) {
 		}
 	}
 	memcpy(Ainit, A, sizeof(double[n][n]));
+}
+
+// Function for creating an array and a copy thereof, by reading from a file
+void readarr(const char filename[], int n, double **A, double **Ainit) {
+	FILE *infile;
+	infile = fopen(filename, "r");
+	for (int i = 0; i < n; ++i) {
+		for (int j = 0; j < n; ++j) {
+			fscanf(infile, "%lf ", &A[i][j]);
+		}
+		fscanf(infile, "\n");
+		memcpy(Ainit[i], A[i], n * sizeof(double));
+	}
+
+	fclose(infile);
+}
+
+// Parallelised version of readarr that works with 1d arrays
+void readarr1d(const char filename[], int n, double *A, double *Ainit) {
+	FILE *infile;
+	infile = fopen(filename, "r");
+	for (int i = 0; i < n; ++i) {
+		for (int j = 0; j < n; ++j) {
+			fscanf(infile, "%lf ", &A[i*n + j]);
+		}
+		fscanf(infile, "\n");
+	}
+	memcpy(Ainit, A, sizeof(double[n][n]));
+}
+
+// Writes the matrices A, U, L and Pi to a file
+void write(int n, double **a, double **u, double **l, int *pi) {
+	FILE *permutation = fopen("Permutation", "w");
+	FILE *lowertri = fopen("LowerTri", "w");
+	FILE *uppertri = fopen("UpperTri", "w");
+	FILE *matrix = fopen("Matrix", "w");
+	for (int i = 0; i < n; ++i) {
+		fprintf(permutation, "%i ", pi[i]);
+		for (int j = 0; j < n; ++j) {
+			fprintf(lowertri, "%lf ", l[i][j]);
+			fprintf(uppertri, "%lf ", u[i][j]);
+			fprintf(matrix, "%lf ", a[i][j]);
+		}
+		fprintf(lowertri, "\n");
+		fprintf(uppertri, "\n");
+		fprintf(matrix, "\n");
+	}
+	fclose(permutation);
+	fclose(lowertri);
+	fclose(uppertri);
+}
+
+// A version of the function write that works with 1d matrices
+void write1d(int n, double *a, double *u, double *l, int *pi) {
+	FILE *permutation = fopen("Permutation", "w");
+	FILE *lowertri = fopen("LowerTri", "w");
+	FILE *uppertri = fopen("UpperTri", "w");
+	FILE *matrix = fopen("Matrix", "w");
+	for (int i = 0; i < n; ++i) {
+		fprintf(permutation, "%i ", pi[i]);
+		for (int j = 0; j < n; ++j) {
+			fprintf(lowertri, "%lf ", l[i*n + j]);
+			fprintf(uppertri, "%lf ", u[i*n + j]);
+			fprintf(matrix, "%lf ", u[i*n + j]);
+		}
+		fprintf(lowertri, "\n");
+		fprintf(uppertri, "\n");
+		fprintf(matrix, "\n");
+	}
+	fclose(permutation);
+	fclose(lowertri);
+	fclose(uppertri);
+	fclose(matrix);	
 }
 
 // Unused function that initializes A, Ainit, L, U and Pi, all at once
@@ -105,62 +181,6 @@ double l21norm(int n, double **a) {
 	return sum;
 }
 
-// Writes the matrices A, U, L and Pi to a file
-void write(int n, double **a, double **u, double **l, int *pi, FILE *ofile) {
-	fprintf(ofile, "%i\n", n);
-	for (int i = 0; i < n; ++i) {
-		for (int j = 0; j < n; ++j) {
-			fprintf(ofile, "%f\t", a[i][j]);
-		}
-		fprintf(ofile, "\n");
-	}
-	for (int i = 0; i < n; ++i) {
-		for (int j = 0; j < n; ++j) {
-			fprintf(ofile, "%f\t", u[i][j]);
-		}
-		fprintf(ofile, "\n");
-	}
-	for (int i = 0; i < n; ++i) {
-		for (int j = 0; j < n; ++j) {
-			fprintf(ofile, "%f\t", l[i][j]);
-		}
-		fprintf(ofile, "\n");
-	}
-	for (int i = 0; i < n; ++i) {
-		fprintf(ofile, "%i\t", pi[i]);
-	}
-	fprintf(ofile, "\n");
-	
-}
-
-// A version of the function write that works with 1d matrices
-void write1d(int n, double *a, double *u, double *l, int *pi, FILE *ofile) {
-	fprintf(ofile, "%i\n", n);
-	for (int i = 0; i < n; ++i) {
-		for (int j = 0; j < n; ++j) {
-			fprintf(ofile, "%f\t", a[i*n + j]);
-		}
-		fprintf(ofile, "\n");
-	}
-	for (int i = 0; i < n; ++i) {
-		for (int j = 0; j < n; ++j) {
-			fprintf(ofile, "%f\t", u[i*n + j]);
-		}
-		fprintf(ofile, "\n");
-	}
-	for (int i = 0; i < n; ++i) {
-		for (int j = 0; j < n; ++j) {
-			fprintf(ofile, "%f\t", l[i*n + j]);
-		}
-		fprintf(ofile, "\n");
-	}
-	for (int i = 0; i < n; ++i) {
-		fprintf(ofile, "%i\t", pi[i]);
-	}
-	fprintf(ofile, "\n");
-	
-}
-
 // Unused code for verifying the result of the decomposition.
 /*int verify() {
 	double (*p)[n] = malloc(sizeof(double[n][n]));
@@ -178,5 +198,4 @@ void write1d(int n, double *a, double *u, double *l, int *pi, FILE *ofile) {
 	matdif(n, pa, lu, residual);
 	double norm = l21norm(n, residual);
 	printf("L21 norm of the residual: %f\n", norm);
-
 }*/

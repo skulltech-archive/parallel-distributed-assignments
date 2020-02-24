@@ -3,41 +3,31 @@ import argparse
 import sys
 
 
-def readfile(ludresults):
-	with open(ludresults, 'r') as f:
+def readfile(file, p=False):
+	with open(file, 'r') as f:
 		lines = f.readlines()
-	n = int(lines[0])
-
-	a = []
-	u = []
-	l = []
-	for i in range(n):
-		line = lines[i + 1]
+	n = len(lines)
+	matrix = []
+	for line in lines:
 		nums = [float(x) for x in line.split()]
-		a.append(nums)
-		line = lines[i + n + 1]
-		nums = [float(x) for x in line.split()]
-		u.append(nums)
-		line = lines[i + (2*n) + 1]
-		nums = [float(x) for x in line.split()]
-		l.append(nums)
-	a = np.array(a)
-	u = np.array(u)
-	l = np.array(l)
-
-	pi = [int(x) for x in lines[(3*n) + 1].split()]
-	p = np.zeros((n, n))
-	for i in range(n):
-		p[i][pi[i]] = 1
+		matrix.append(nums)
 	
-	return a, u, l, p
+	if p:
+		n = len(matrix[0])
+		pi = np.zeros((n, n))
+		for i in range(n):
+			pi[i][int(matrix[0][i])] = 1
+		return pi
+	else:
+		return np.array(matrix)
 
 
-def verify(ludresults):
-	a, u, l, p = readfile(ludresults)
+def verify(infile):
+	a = readfile(infile)
+	l = readfile('LowerTri')
+	u = readfile('UpperTri')
+	p = readfile('Permutation', p=True)
 	residual = (p @ a) - (l @ u)
-	print(p @ a)
-	print(l @ u)
 	print(residual)
 	l21norm = np.sum(np.linalg.norm(residual, axis=0))
 	print(l21norm)
@@ -45,14 +35,14 @@ def verify(ludresults):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('ludresults', type=str)
+    parser.add_argument('infile', type=str, help='File containing input matrix.')
     parser.set_defaults(func=verify)
 
     if len(sys.argv) < 2:
         parser.print_help()
         sys.exit(1)
     args = parser.parse_args()
-    args.func(args.ludresults)
+    args.func(args.infile)
 
 
 if __name__ == '__main__':

@@ -50,6 +50,12 @@ int main(int argc, char const *argv[]) {
 	double elapsed;
 	clock_gettime(CLOCK_MONOTONIC, &start);
 	int n = atoi(argv[1]);
+	bool in = false;
+	const char *infile;
+	if (argc > 2) {
+		in = true;
+		infile = argv[2];
+	}
 
 	double **A = malloc(n * sizeof(double *));
 	double **Ainit = malloc(n * sizeof(double *));
@@ -63,7 +69,11 @@ int main(int argc, char const *argv[]) {
 	}
 	int *Pi = malloc(sizeof(int[n]));
 	
-	randarr(n, A, Ainit);
+	if (in) {
+		readarr(infile, n, A, Ainit);
+	} else {
+		randarr(n, A, Ainit);
+	}
 	LUDecompose(n, A, Pi);
 
 	for (int i = 0; i < n; ++i) {
@@ -84,8 +94,7 @@ int main(int argc, char const *argv[]) {
 	elapsed += (finish.tv_nsec - start.tv_nsec) / 1000000000.0;
 	printf("Time taken for LU decomposition of a %i X %i matrix: %f\n", n, n, elapsed);
 
-	// FILE *ofile = fopen("matrices", "w");
-	// write(n, Ainit, U, L, Pi, ofile);
-	// fclose(ofile);
-	// return 0;
+	// Write the matrices, including the resultant ones, to a file
+	write(n, Ainit, U, L, Pi);
+	return 0;
 }

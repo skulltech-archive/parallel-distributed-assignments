@@ -59,6 +59,12 @@ int main(int argc, char const *argv[]) {
 	// We need system time, not CPU time
 	clock_gettime(CLOCK_MONOTONIC, &start);
 	int n = atoi(argv[1]);
+	bool in = false;
+	const char *infile;
+	if (argc > 2) {
+		in = true;
+		infile = argv[2];
+	}
 
 	double **A = malloc(n * sizeof(double *));
 	double **Ainit = malloc(n * sizeof(double *));
@@ -75,7 +81,11 @@ int main(int argc, char const *argv[]) {
 		L[i] = malloc(n * sizeof(double));
 	}
 	
-	randarromp(n, A, Ainit);
+	if (in) {
+		readarr(infile, n, A, Ainit);
+	} else {
+		randarromp(n, A, Ainit);
+	}
 	LUDecompose(n, A, Pi);
 
 	// This loop is perfectly collapsible
@@ -99,8 +109,6 @@ int main(int argc, char const *argv[]) {
 	printf("Time taken for LU decomposition of a %i X %i matrix: %f\n", n, n, elapsed);
 
 	// Write the matrices, including the resultant ones, to a file
-	FILE *ofile = fopen("matrices", "w");
-	write(n, Ainit, U, L, Pi, ofile);
-	fclose(ofile);
+	write(n, Ainit, U, L, Pi);
 	return 0;
 }
