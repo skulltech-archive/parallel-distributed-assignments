@@ -13,10 +13,6 @@ void randarromp(int n, double **A, double **Ainit);
 void randarromp1d(int n, double *A, double *Ainit);
 void readarr(const char filename[], int n, double **A, double **Ainit);
 void readarr1d(const char filename[], int n, double *A, double *Ainit);
-void matmul(int n, double **a, double **b, double **result);
-void matdif(int n, double **a, double **b, double **result);
-double l21norm(int n, double **a);
-void initarrs(int n, double **A, double **Ainit, double **L, double **U, int *Pi);
 
 
 // Function for creating a random array and a copy thereof
@@ -146,56 +142,3 @@ void initarrs(int n, double **A, double **Ainit, double **L, double **U, int *Pi
 		memcpy(Ainit[i], A[i], n * sizeof(double));
 	}
 }
-
-// Function for multiplying two matrices
-void matmul(int n, double **a, double **b, double **result) {
-	for (int i = 0; i < n; ++i) {
-		for (int j = 0; j < n; ++j) {
-			result[i][j] = 0;
-			for (int k = 0; k < n; ++k) {
-				result[i][j] += a[i][k] * b[k][j];
-			}
-		}
-	}
-}
-
-// Calculates the difference of two matrices
-void matdif(int n, double **a, double **b, double **result) {
-	for (int i = 0; i < n; ++i) {
-		for (int j = 0; j < n; ++j) {
-			result[i][j] = a[i][j] - b[i][j];
-		}
-	}
-}
-
-// Calculates the l21 norm of a matrix
-double l21norm(int n, double **a) {
-	double sum = 0;
-	for (int j = 0; j < n; ++j) {
-		double sqrsum = 0;
-		for (int i = 0; i < n; ++i) {
-			sqrsum = sqrsum + (a[i][j] * a[i][j]);
-		}
-		sum = sum + sqrt(sqrsum);
-	}
-	return sum;
-}
-
-// Unused code for verifying the result of the decomposition.
-/*int verify() {
-	double (*p)[n] = malloc(sizeof(double[n][n]));
-	for (int i = 0; i < n; ++i) {
-		for (int j = 0; j < n; ++j) {
-			p[i][j] = 0;
-		}
-		p[i][pi[i]] = 1;
-	}
-	double (*pa)[n] = malloc(sizeof(double[n][n]));
-	double (*lu)[n] = malloc(sizeof(double[n][n]));
-	double (*residual)[n] = malloc(sizeof(double[n][n]));
-	matmul(n, p, ainit, pa);
-	matmul(n, l, u, lu);
-	matdif(n, pa, lu, residual);
-	double norm = l21norm(n, residual);
-	printf("L21 norm of the residual: %f\n", norm);
-}*/
