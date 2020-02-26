@@ -39,50 +39,29 @@ int main(int argc, char const *argv[]) {
 	// Parallel multiplication
 	int mpart = m / world_size;
 	float *Apart = malloc(mpart * n * sizeof(float));
-	float *Cpart = malloc(mpart * p * sizeof(float));
-	
-	// Master node
-	if (!world_rank) {
-		start = MPI_Wtime();
+	float *Cpart = &C[world_rank * mpart * p];
 
-		for (int i = 1; i < world_size; ++i) {
-			MPI_Send(&A[i*mpart*n], mpart*n, MPI_FLOAT, i, 1, MPI_COMM_WORLD);
-			MPI_Send(B, n*p, MPI_FLOAT, i, 2, MPI_COMM_WORLD);
-		}
-		// Master node's share of multiplication
-		for (int i = 0; i < mpart; ++i) {
-			for (int j = 0; j < p; ++j) {
-				C[i*p + j] = 0.0;
-				for (int k = 0; k < n; ++k) {
-					C[i*p + j] += + A[i*n + k] * B[k*p + j];
-				}
+	start = MPI_Wtime();
+	MPI_Scatter(A, mpart * n, MPI_FLOAT, Apart, mpart * n, MPI_FLOAT, 0, MPI_COMM_WORLD);
+
+	// Muliplication part
+	for (int i = 0; i < mpart; ++i) {
+		for (int j = 0; j < p; ++j) {
+			Cpart[i*p + j] = 0.0;
+			for (int k = 0; k < n; ++k) {
+				C[i*p + j] += + Apart[i*n + k] * B[k*p + j];
 			}
 		}
-		for (int i = 1; i < world_size; ++i) {
-			MPI_Recv(&C[i*mpart*p], mpart*p, MPI_FLOAT, i, 3, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-		}
-
+	}
+	
+	MPI_Barrier(MPI_COMM_WORLD);
+	// Master node
+	if (!world_rank) {
 		elapsed = MPI_Wtime() - start;
 		printf("[*] Parallel multiplication: %f seconds\n", elapsed);
 
 		int correct = IsEqual(C, C_serial, m, p);
 		printf("[*] Parallel correctness: %d\n", correct);
-	}
-
-	// Worker nodes 
-	if (world_rank) {
-		MPI_Recv(Apart, mpart*n, MPI_FLOAT, 0, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-		MPI_Recv(B, n*p, MPI_FLOAT, 0, 2, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-
-		for (int i = 0; i < mpart; ++i) {
-			for (int j = 0; j < p; ++j) {
-				Cpart[i*p + j] = 0.0;
-				for (int k = 0; k < n; ++k) {
-					Cpart[i*p + j] += + Apart[i*n + k] * B[k*p + j];
-				}
-			}
-		}
-		MPI_Send(Cpart, mpart*p, MPI_FLOAT, 0, 3, MPI_COMM_WORLD);
 	}
 
 	MPI_Finalize();
