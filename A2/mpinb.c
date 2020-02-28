@@ -35,7 +35,7 @@ int main(int argc, char const *argv[]) {
 		elapsed = MPI_Wtime() - start;
 		printf("[*] Serial multiplication: %f seconds\n", elapsed);
 	}
-	
+
 	// Parallel multiplication
 	int mpart = m / world_size;
 	MPI_Request request_ids[(world_size-1)*2];
