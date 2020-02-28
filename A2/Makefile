@@ -1,4 +1,4 @@
-PROCESSES = 4
+PROCESSES = 2
 N = 6000
 
 build: mpib.c mpinb.c
