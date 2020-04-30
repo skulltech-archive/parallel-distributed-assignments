@@ -27,6 +27,7 @@ def verify(infile):
 	l = readfile('LowerTri')
 	u = readfile('UpperTri')
 	p = readfile('Permutation', p=True)
+	np.savetxt('PermutationExpand', p, fmt='%f')
 	residual = (p @ a) - (l @ u)
 	print(residual)
 	l21norm = np.sum(np.linalg.norm(residual, axis=0))
